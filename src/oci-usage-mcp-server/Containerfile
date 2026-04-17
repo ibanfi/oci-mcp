@@ -11,12 +11,17 @@ WORKDIR /app
 COPY --chown=oracle:oracle . /app
 
 # Install dependencies
-RUN pip3.13 install --no-cache-dir uv && \
-  uv --no-cache sync --locked --all-extras
+RUN pip3.13 install --no-cache-dir uv
 
 # Change user
 USER oracle
 
+# Install dependencies as runtime user so .venv is writable at startup
+RUN uv --no-cache sync --locked --all-extras
+
+# Run the preinstalled server directly from the virtualenv to avoid per-run sync/build logs
+ENV PATH="/app/.venv/bin:${PATH}"
+
 # Start the MCP server
-ENTRYPOINT ["uv", "run", "oracle.oci-usage-mcp-server"]
+ENTRYPOINT ["oracle.oci-usage-mcp-server"]
 
